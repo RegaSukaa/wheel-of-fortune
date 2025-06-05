@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fortune Wheel - Колесо Фортуны</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding-bottom: 80px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-top: 20px;
+        }
+        
+        .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+        
+        h1 {
+            font-size: 32px;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+            color: white;
+            border: none;
+            padding: 18px 25px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 15px;
+            cursor: pointer;
+            margin: 15px 0;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn i {
+            margin-right: 12px;
+            font-size: 24px;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+        }
+        
+        .btn-secondary:hover {
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.6);
+        }
+        
+        .btn-tertiary {
+            background: linear-gradient(45deg, #42e695, #3bb2b8);
+            box-shadow: 0 4px 15px rgba(66, 230, 149, 0.4);
+        }
+        
+        .btn-tertiary:hover {
+            box-shadow: 0 6px 20px rgba(66, 230, 149, 0.6);
+        }
+        
+        .screen {
+            display: none;
+        }
+        
+        .active {
+            display: block;
+        }
+        
+        .back-btn {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.2s ease;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .back-btn i {
+            margin-right: 8px;
+        }
+        
+        .wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 30px auto;
+            transform-origin: center;
+        }
+        
+        #wheelCanvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .wheel-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            background: #ff4757;
+            border-radius: 50%;
+            z-index: 10;
+            box-shadow: 0 0 15px rgba(255, 71, 87, 0.7);
+        }
+        
+        .pointer {
+            position: absolute;
+            top: 140px;
+            left: 98%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 40px;
+            background: #ff4757;   
+            clip-path: polygon(100% 50%, 0% 25%, 100% 0);
+            z-index: 5;
+        }
+        
+        .result-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.85);
+            padding: 30px 50px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 0 50px rgba(255, 255, 255, 0.3);
+            border: 2px solid #ff6b6b;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 20px rgba(255, 107, 107, 0.7); }
+            50% { box-shadow: 0 0 40px rgba(255, 107, 107, 1); }
+            100% { box-shadow: 0 0 20px rgba(255, 107, 107, 0.7); }
+        }
+        
+        .result-text {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.7);
+        }
+        
+        .close-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            background: #ff4757;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+        }
+        
+        .items-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 20px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+        }
+        
+        .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            margin-bottom: 8px;
+            border-radius: 8px;
+        }
+        
+        .item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .item button {
+            background: rgba(255, 107, 107, 0.7);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .add-item {
+            display: flex;
+            margin-top: 15px;
+        }
+        
+        .add-item input {
+            flex: 1;
+            margin-right: 10px;
+        }
+        
+        .add-btn {
+            background: #42e695;
+            color: white;
+            border: none;
+            width: 50px;
+            border-radius: 10px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .spin-btn {
+            background: linear-gradient(45deg, #ff9a9e, #fad0c4);
+            color: #333;
+            font-weight: bold;
+            font-size: 22px;
+            padding: 20px;
+            margin-top: 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        .presets {
+            margin-top: 20px;
+        }
+        
+        .preset-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .preset-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .random-result {
+            text-align: center;
+            font-size: 80px;
+            font-weight: bold;
+            margin: 30px 0;
+            color: #ffd32a;
+            text-shadow: 0 0 20px rgba(255, 211, 42, 0.7);
+            animation: glow 1.5s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #ffd32a; }
+            to { text-shadow: 0 0 30px #ffd32a, 0 0 40px #ffd32a; }
+        }
+        
+        .range-display {
+            text-align: center;
+            font-size: 20px;
+            margin: 20px 0;
+            color: #ffd32a;
+        }
+        
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .bug-btn {
+            color: #ff6b6b;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .bug-btn:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 500px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header {
+                padding-top: 10px;
+            }
+            
+            .logo {
+                font-size: 40px;
+            }
+            
+            h1 {
+                font-size: 28px;
+            }
+            
+            .wheel-container {
+                width: 280px;
+                height: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Главный экран -->
+        <div id="mainScreen" class="screen active">
+            <div class="header">
+                <div class="logo">
+                    <i class="fas fa-dharmachakra"></i>
+                </div>
+                <h1>Колесо Фортуны</h1>
+                <div class="subtitle">Выберите действие и испытайте удачу!</div>
+            </div>
+            
+            <div class="card">
+                <button id="createWheelBtn" class="btn">
+                    <i class="fas fa-plus-circle"></i> Создать Колесо Фортуны
+                </button>
+                
+                <button id="randomNumberBtn" class="btn btn-secondary">
+                    <i class="fas fa-random"></i> Выбрать Случайное Число
+                </button>
+            </div>
+        </div>
+        
+        <!-- Экран создания колеса -->
+        <div id="wheelScreen" class="screen">
+            <button class="back-btn" id="backToMainFromWheel">
+                <i class="fas fa-arrow-left"></i> На главную
+            </button>
+            
+            <div class="card">
+                <h2><i class="fas fa-cog"></i> Настройки Колеса</h2>
+                
+                <div class="form-group">
+                    <label for="wheelName">Название колеса:</label>
+                    <input type="text" id="wheelName" placeholder="Моё крутое колесо">
+                </div>
+                
+                <div class="form-group">
+                    <label>Элементы колеса:</label>
+                    <div class="items-list" id="itemsList">
+                        <!-- Сюда будут добавляться элементы -->
+                    </div>
+                    
+                    <div class="add-item">
+                        <input type="text" id="newItem" placeholder="Добавить элемент...">
+                        <button class="add-btn" id="addItemBtn">+</button>
+                    </div>
+                </div>
+                
+                <button id="saveWheelBtn" class="btn btn-tertiary">
+                    <i class="fas fa-save"></i> Сохранить колесо
+                </button>
+                
+                <button id="savedWheelsBtn" class="btn btn-secondary">
+                    <i class="fas fa-save"></i> Мои пресеты
+                </button>
+            </div>
+            
+            <div class="card">
+                <div class="wheel-container">
+                    <div class="pointer"></div>
+                    <canvas id="wheelCanvas" width="300" height="300"></canvas>
+                    <div class="wheel-center"></div>
+                </div>
+                
+                <button id="spinWheelBtn" class="btn spin-btn">
+                    <i class="fas fa-sync-alt"></i> Крутить колесо!
+                </button>
+            </div>
+        </div>
+        
+        <!-- Экран случайного числа -->
+        <div id="randomScreen" class="screen">
+            <button class="back-btn" id="backToMainFromRandom">
+                <i class="fas fa-arrow-left"></i> На главную
+            </button>
+            
+            <div class="card">
+                <h2><i class="fas fa-dice"></i> Генератор случайных чисел</h2>
+                
+                <div class="form-group">
+                    <label for="minNumber">Минимальное число:</label>
+                    <input type="number" id="minNumber" value="1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="maxNumber">Максимальное число:</label>
+                    <input type="number" id="maxNumber" value="100">
+                </div>
+                
+                <button id="generateNumberBtn" class="btn">
+                    <i class="fas fa-bolt"></i> Сгенерировать число
+                </button>
+                
+                <div class="range-display" id="rangeDisplay">
+                    Диапазон: от 1 до 100
+                </div>
+                
+                <div class="random-result" id="randomResult">
+                    ?
+                </div>
+            </div>
+        </div>
+        
+        <!-- Экран сохраненных колес -->
+        <div id="savedWheelsScreen" class="screen">
+            <button class="back-btn" id="backToMainFromSaved">
+                <i class="fas fa-arrow-left"></i> На главную
+            </button>
+            
+            <div class="card">
+                <h2><i class="fas fa-save"></i> Мои Пресеты</h2>
+                
+                <div class="presets" id="savedWheelsList">
+                    <!-- Сюда будут добавляться сохраненные колеса -->
+                    <div class="preset-item">У вас пока нет сохранённых колес</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Попап с результатом -->
+        <div class="result-popup" id="resultPopup">
+            <div class="result-text" id="resultText">Победитель!</div>
+            <button class="close-btn" id="closePopupBtn">Закрыть</button>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <a href="https://t.me/Pluh5" class="bug-btn" target="_blank">
+            <i class="fas fa-bug"></i> Нашёл баг? Сообщи нам!
+        </a>
+    </div>
+
+    <script>
+        // Состояние приложения
+        const state = {
+            items: [],
+            savedWheels: JSON.parse(localStorage.getItem('savedWheels')) || [],
+            currentWheelName: ''
+        };
+
+        // Элементы DOM
+        const screens = {
+            main: document.getElementById('mainScreen'),
+            wheel: document.getElementById('wheelScreen'),
+            random: document.getElementById('randomScreen'),
+            saved: document.getElementById('savedWheelsScreen')
+        };
+        
+        const wheelCanvas = document.getElementById('wheelCanvas');
+        const ctx = wheelCanvas.getContext('2d');
+        const itemsList = document.getElementById('itemsList');
+        const newItemInput = document.getElementById('newItem');
+        const savedWheelsList = document.getElementById('savedWheelsList');
+        const resultPopup = document.getElementById('resultPopup');
+        const resultText = document.getElementById('resultText');
+        const randomResult = document.getElementById('randomResult');
+        const rangeDisplay = document.getElementById('rangeDisplay');
+
+        // Навигация
+        document.getElementById('createWheelBtn').addEventListener('click', () => showScreen('wheel'));
+        document.getElementById('randomNumberBtn').addEventListener('click', () => showScreen('random'));
+        document.getElementById('savedWheelsBtn').addEventListener('click', () => {
+            renderSavedWheels();
+            showScreen('saved');
+        });
+        
+        document.getElementById('backToMainFromWheel').addEventListener('click', () => showScreen('main'));
+        document.getElementById('backToMainFromRandom').addEventListener('click', () => showScreen('main'));
+        document.getElementById('backToMainFromSaved').addEventListener('click', () => showScreen('main'));
+        document.getElementById('closePopupBtn').addEventListener('click', () => resultPopup.style.display = 'none');
+
+        // Работа с колесом
+        document.getElementById('addItemBtn').addEventListener('click', addItem);
+        document.getElementById('saveWheelBtn').addEventListener('click', saveWheel);
+        document.getElementById('spinWheelBtn').addEventListener('click', spinWheel);
+        
+        // Генератор чисел
+        document.getElementById('generateNumberBtn').addEventListener('click', generateRandomNumber);
+        document.getElementById('minNumber').addEventListener('input', updateRangeDisplay);
+        document.getElementById('maxNumber').addEventListener('input', updateRangeDisplay);
+        
+        // Функции навигации
+        function showScreen(screenName) {
+            Object.values(screens).forEach(screen => screen.classList.remove('active'));
+            screens[screenName].classList.add('active');
+            
+            if (screenName === 'wheel') {
+                renderItemsList();
+                drawWheel();
+            } else if (screenName === 'random') {
+                updateRangeDisplay();
+            }
+        }
+        
+        // Работа с элементами колеса
+        function addItem() {
+            const text = newItemInput.value.trim();
+            if (text) {
+                state.items.push(text);
+                renderItemsList();
+                drawWheel();
+                newItemInput.value = '';
+                newItemInput.focus();
+            }
+        }
+        
+        function removeItem(index) {
+            state.items.splice(index, 1);
+            renderItemsList();
+            drawWheel();
+        }
+        
+        function renderItemsList() {
+            itemsList.innerHTML = '';
+            
+            if (state.items.length === 0) {
+                itemsList.innerHTML = '<div class="item">Добавьте элементы колеса</div>';
+                return;
+            }
+            
+            state.items.forEach((item, index) => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'item';
+                itemElement.innerHTML = `
+                    <span>${item}</span>
+                    <button onclick="removeItem(${index})"><i class="fas fa-times"></i></button>
+                `;
+                itemsList.appendChild(itemElement);
+            });
+        }
+        
+        // Отрисовка колеса
+        function drawWheel() {
+            const centerX = wheelCanvas.width / 2;
+            const centerY = wheelCanvas.height / 2;
+            const radius = Math.min(centerX, centerY) - 10;
+            
+            ctx.clearRect(0, 0, wheelCanvas.width, wheelCanvas.height);
+            
+            if (state.items.length === 0) {
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#3498db';
+                ctx.fill();
+                ctx.stroke();
+                
+                ctx.font = '16px Arial';
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.fillText('Добавьте элементы', centerX, centerY - 10);
+                ctx.fillText('в настройках', centerX, centerY + 15);
+                return;
+            }
+            
+            const sliceAngle = (Math.PI * 2) / state.items.length;
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFBE0B', '#FB5607', '#8338EC', '#3A86FF'];
+            
+            for (let i = 0; i < state.items.length; i++) {
+                const startAngle = i * sliceAngle;
+                const endAngle = startAngle + sliceAngle;
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Текст
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(startAngle + sliceAngle / 2);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = 'white';
+                ctx.font = '14px Arial';
+                
+                // Укорочение текста для отображения
+                let text = state.items[i];
+                if (text.length > 15) {
+                    text = text.substring(0, 12) + '...';
+                }
+                
+                ctx.fillText(text, radius - 20, 5);
+                ctx.restore();
+            }
+        }
+        
+        // Вращение колеса с исправленным расчетом результата
+        function spinWheel() {
+            if (state.items.length < 2) {
+                alert('Добавьте как минимум 2 элемента!');
+                return;
+            }
+            
+            const spinBtn = document.getElementById('spinWheelBtn');
+            spinBtn.disabled = true;
+            spinBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Крутится...';
+            
+            const spins = 5 + Math.random() * 3; // 5-8 полных оборотов
+            const duration = 3000; // 3 секунды
+            const startTime = Date.now();
+            
+            // Сохраняем начальное состояние вращения
+            const startRotation = wheelCanvas.rotation || 0;
+            wheelCanvas.rotation = startRotation;
+            
+            function rotate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeProgress = 1 - Math.pow(1 - progress, 3); // Кубическое замедление
+                
+                // Вычисляем угол поворота с замедлением
+                const rotation = easeProgress * spins * Math.PI * 2;
+                wheelCanvas.rotation = startRotation + rotation;
+                wheelCanvas.style.transform = `rotate(${wheelCanvas.rotation}rad)`;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(rotate);
+                } else {
+                    // Вычисляем победителя на основе конечного угла
+                    const finalRotation = wheelCanvas.rotation % (Math.PI * 2);
+                    const n = state.items.length;
+                    const slice = (Math.PI * 2) / n;
+                    
+                    // Вычисляем индекс победителя (стрелка вверху)
+                    const winnerIndex = Math.floor(((Math.PI * 2 - finalRotation) % (Math.PI * 2)) / slice) % n;
+                    const winnerText = state.items[winnerIndex];
+                    
+                    // Показ результата
+                    setTimeout(() => {
+                        spinBtn.disabled = false;
+                        spinBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Крутить колесо!';
+                        showResult(winnerText);
+                    }, 500);
+                }
+            }
+            
+            rotate();
+        }
+        
+        function showResult(text) {
+            resultText.textContent = text;
+            resultPopup.style.display = 'block';
+        }
+        
+        // Сохранение колеса
+        function saveWheel() {
+            const name = document.getElementById('wheelName').value.trim() || 'Без названия';
+            
+            if (state.items.length < 2) {
+                alert('Добавьте как минимум 2 элемента для сохранения!');
+                return;
+            }
+            
+            const wheelData = {
+                name: name,
+                items: [...state.items],
+                timestamp: new Date().toISOString()
+            };
+            
+            // Проверяем, есть ли уже такое колесо
+            const existingIndex = state.savedWheels.findIndex(w => w.name === name);
+            
+            if (existingIndex !== -1) {
+                state.savedWheels[existingIndex] = wheelData;
+            } else {
+                state.savedWheels.push(wheelData);
+            }
+            
+            localStorage.setItem('savedWheels', JSON.stringify(state.savedWheels));
+            alert(`Колесо "${name}" успешно сохранено!`);
+        }
+        
+        // Отображение сохраненных колес
+        function renderSavedWheels() {
+            savedWheelsList.innerHTML = '';
+            
+            if (state.savedWheels.length === 0) {
+                savedWheelsList.innerHTML = '<div class="preset-item">У вас пока нет сохранённых колес</div>';
+                return;
+            }
+            
+            state.savedWheels.forEach((wheel, index) => {
+                const wheelElement = document.createElement('div');
+                wheelElement.className = 'preset-item';
+                wheelElement.innerHTML = `
+                    <div><strong>${wheel.name}</strong></div>
+                    <div>${wheel.items.length} элементов</div>
+                `;
+                
+                wheelElement.addEventListener('click', () => {
+                    state.items = [...wheel.items];
+                    document.getElementById('wheelName').value = wheel.name;
+                    renderItemsList();
+                    drawWheel();
+                    showScreen('wheel');
+                });
+                
+                savedWheelsList.appendChild(wheelElement);
+            });
+        }
+        
+        // Генерация случайного числа
+        function generateRandomNumber() {
+            const min = parseInt(document.getElementById('minNumber').value) || 0;
+            const max = parseInt(document.getElementById('maxNumber').value) || 100;
+            
+            if (min >= max) {
+                alert('Минимальное число должно быть меньше максимального!');
+                return;
+            }
+            
+            randomResult.textContent = '...';
+            
+            // Анимация генерации числа
+            let counter = 0;
+            const duration = 1500;
+            const start = Date.now();
+            const result = Math.floor(Math.random() * (max - min + 1)) + min;
+            
+            function animate() {
+                const elapsed = Date.now() - start;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                if (progress < 1) {
+                    // Показываем "случайные" числа во время анимации
+                    randomResult.textContent = Math.floor(Math.random() * (max - min + 1)) + min;
+                    requestAnimationFrame(animate);
+                } else {
+                    randomResult.textContent = result;
+                }
+            }
+            
+            animate();
+        }
+        
+        function updateRangeDisplay() {
+            const min = parseInt(document.getElementById('minNumber').value) || 0;
+            const max = parseInt(document.getElementById('maxNumber').value) || 100;
+            rangeDisplay.textContent = `Диапазон: от ${min} до ${max}`;
+        }
+        
+        // Инициализация
+        window.onload = function() {
+            updateRangeDisplay();
+            drawWheel();
+            
+            // Загрузка сохраненных колес
+            if (state.savedWheels.length > 0) {
+                const lastWheel = state.savedWheels[state.savedWheels.length - 1];
+                state.items = [...lastWheel.items];
+                document.getElementById('wheelName').value = lastWheel.name;
+                renderItemsList();
+            }
+        };
+        
+        // Публикация функций для использования в HTML
+        window.removeItem = removeItem;
+    </script>
+</body>
+</html>
